@@ -1,0 +1,14 @@
+{
+  "name": "bofa_exercise_raw",
+  "version": "1.0.0",
+  "description": "node test as minimal and as raw as i can manage",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "exercise"
+  ],
+  "author": "Wesley D. Radcliffe",
+  "license": "ISC"
+}
