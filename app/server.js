@@ -10,8 +10,15 @@ const HTTP = require('http'); //https://nodejs.org/api/http.html
 const HTTP_PORT = 3000; //should be open, if not pick something else!
 const SPAWN = require('child_process').spawn; //spawn is the root of the others, could run file exec tho?
 const EXEC = require('child_process').exec;
+const fork = require('child_process').fork;
 
 //requirements/includes
+
+//update. we have to spawn the child processes at the start.
+var even_child_process = fork(__dirname + '/even.js');
+var odd_child_process = fork(__dirname + '/odd.js');
+
+
 
 //do basic routing inside the request handler
 //the arrow here is ES6 arrow notation for function(request,response){}; but doesnt bind THIS
@@ -49,37 +56,32 @@ const requestHandler = (request, response) => { //why const instead of var? func
                 //test even or odd and invoke child process
 
                 if(body.number % 2 === 0){//even
-                    //console.log('even if: ' + (body.number % 2));
-                    EXEC('node app/even.js ' + body.number, function(error,stdout,stderr){
-                        var child_response = stdout.replace(/\n$/, ""); // would need to test for garbage
+
+                    even_child_process.send(body.number);
+
+                    even_child_process.on('message', function(child_response) {
+                        console.log('SERVER.JS LISTENING: ' + child_response);
                         var response_payload = JSON.stringify({'response':child_response});
-                        console.log(child_response);
                         response.statusCode = 200;
                         response.setHeader('Content-Type', 'application/json');
                         response.write(response_payload);
                         response.end();
-                        
-                        if (error !== null) {
-                            console.log('exec error: ', error);
-                        }
                     });
 
                 } 
                 else {//odd
-                    //console.log('odd if: ' + (body.number % 2));
-                    EXEC('node app/odd.js ' + body.number, function(error,stdout,stderr){
-                        var child_response = stdout.replace(/\n$/, ""); // would need to test for garbage
+
+                    odd_child_process.send(body.number);
+
+
+                    odd_child_process.on('message', function(child_response) {
+                        console.log('SERVER.JS LISTENING: ' + child_response);
                         var response_payload = JSON.stringify({'response':child_response});
                         response.statusCode = 200;
                         response.setHeader('Content-Type', 'application/json');
                         response.write(response_payload);
                         response.end();
-                        
-                        if (error !== null) {
-                            console.log('exec error: ', error);
-                        }
                     });
-
 
                 }
 
@@ -89,10 +91,6 @@ const requestHandler = (request, response) => { //why const instead of var? func
                 sendResponse(response, 400, '');
               }
             
-
-
-
-
             }).on('error', function(err){
                 console.error(err.stack);
                 sendResponse(response, 500, '');
@@ -106,8 +104,6 @@ const requestHandler = (request, response) => { //why const instead of var? func
     else {
         sendResponse(response, 404, '');
     }
-
-
 
 
 };
